@@ -22,7 +22,8 @@ services:
       - ./server:/home/web/server
     depends_on:
       db: {condition: service_healthy}
-
+    environment:
+      - "ALLOWED_HOSTS=${ALLOWED_HOSTS}"
     ports:
       - "9876:9876"
     command: ["python", "manage.py", "runserver", "0.0.0.0:9876"]

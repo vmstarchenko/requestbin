@@ -25,6 +25,7 @@ sys.path.insert(0, str(APPS_DIR))
 
 env = environ.Env(
     DEBUG=(bool, False),
+    ALLOWED_HOSTS=(str, ''),
 )
 environ.Env.read_env(ETC_DIR / 'env' / 'dev')
 
@@ -38,7 +39,7 @@ DEBUG = env('DEBUG')
 
 ALLOWED_HOSTS = [
     '0.0.0.0', '127.0.0.1', 'localhost',
-]
+] + env('ALLOWED_HOSTS').split(',')
 
 
 # Application definition

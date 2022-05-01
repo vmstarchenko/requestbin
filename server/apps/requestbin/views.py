@@ -4,6 +4,8 @@ import time
 
 from django.http import JsonResponse
 from django.utils import timezone
+from django.middleware.gzip import GZipMiddleware
+
 
 from .models import Request, Bin
 from .forms import RequestForm
@@ -32,6 +34,10 @@ def catch_request(request, bin_id, path):
         params = form.cleaned_data
 
     sleep = params.get('_sleep', 0)
+    encoding = params.get('_encoding')
+    status_code = params.get('_status_code', 200)
+    content_type = params.get('_content_type')
+
     if sleep:
         time.sleep(sleep)
 
@@ -51,15 +57,26 @@ def catch_request(request, bin_id, path):
     )
     req.save()
 
-    return JsonResponse({
-        'url': req.url,
-        'method': req.method,
-        'params': req.params,
-        'body': req.body,
-        'headers': req.headers,
-        'ip': req.ip,
-        'user': req.user and req.user.id,
-    }, status=params.get('status_code', 200))
+    resp = JsonResponse(
+        {
+            'url': req.url,
+            'method': req.method,
+            'params': req.params,
+            'body': req.body,
+            'headers': req.headers,
+            'ip': req.ip,
+            'user': req.user and req.user.id,
+            'now': timezone.now(),
+        },
+        status=status_code,
+        content_type=content_type,
+    )
+
+    if encoding == 'gzip':
+        gzip_middleware = GZipMiddleware(lambda: None)
+        resp = gzip_middleware.process_response(request, resp)
+
+    return resp
 
 
 def export_bin(request, bin_id):
